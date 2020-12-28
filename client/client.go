@@ -1,16 +1,16 @@
 package main
 
 import (
-	"os"
 	go_syslog "log/syslog"
 	"net/http"
+	"os"
+
 	"github.com/sirupsen/logrus"
 	rus_syslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
 const (
-//	url = "http://gfechio-k8s-onboarding-team2.stress.thebeat.co"
-	url = "http://127.0.0.1/"
+	url = "http://gfechio-onboarding-team2.private.k8s.stress.thebeat.co"
 )
 
 var logger = logrus.New()
@@ -36,14 +36,15 @@ func logg() {
 func main() {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", "http://example.com", nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		logger.Error("Could not set HTTP request")
 	}
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Could not make request")
+		logger.Error("Could not make request, error: ", err)
+	} else {
+		logger.Info("Response value as: \n ", resp)
 	}
-	logger.Info("Response value as : %v", resp)
 }
