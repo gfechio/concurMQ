@@ -34,6 +34,7 @@ func logg() {
 }
 
 func main() {
+	logger.Info("Before anything.")
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
