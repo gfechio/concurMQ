@@ -1,0 +1,13 @@
+{{- if .Values.configMaps.enabled -}}
+{{- range .Values.configMaps.cms }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+{{ template "lib-metadata.metadata" $ }}
+  name: {{ .name }}
+data:
+  {{ .fileName }}: |
+  {{ .data | indent 2 }}
+---
+{{- end }}
+{{- end }}

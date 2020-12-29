@@ -1,0 +1,30 @@
+{{- range $key, $value := .Values.ingresses }}
+{{- if .enabled -}}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+{{ template "lib-metadata.metadata" $ }}
+  name: {{ template "lib-metadata.fullname" $ }}-{{ $key }}
+  annotations:
+    {{ if or (eq .type "private") (eq .type "public") -}}
+    kubernetes.io/ingress.class: traefik-{{ .type }}
+    {{- else if eq .type "dashboard" -}}
+    kubernetes.io/ingress.class: nginx-public
+    nginx.ingress.kubernetes.io/auth-url: {{ printf "https://oauth2.%s/oauth2/auth" .clusterSuffix }}
+    nginx.ingress.kubernetes.io/auth-signin: {{ printf "https://oauth2.%s/oauth2/start?rd=https://$host$request_uri" .clusterSuffix }}
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-User, X-Auth-Request-Email"
+    {{- end }}
+{{- with .annotations }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  rules:
+    - host: {{ .host }}.{{ .clusterSuffix }}
+      http:
+        paths:
+          - path: {{ .path }}
+            backend:
+              serviceName: {{ template "lib-metadata.fullname" $ }}
+              servicePort: {{ (index $.Values.service.ports 0).name | default "http-80" }}
+---
+{{- end }}
+{{- end }}

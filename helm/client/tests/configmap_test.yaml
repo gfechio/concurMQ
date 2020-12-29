@@ -1,0 +1,36 @@
+suite: Test ConfigMap
+templates:
+  - configmap.yaml
+tests:
+  - it: should pass
+    set:
+      global.labels.owner: platform
+      configMaps:
+        enabled: "true"
+        cms:
+          - name: config-app1
+            mountPath: /etc/myapp/config.yaml
+            data: |
+              requests:
+                - domain: "thebeat.co"
+                  queryType: "NS"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: v1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: metadata.name
+          pattern: config-app1
+      - equal:
+          path: metadata.labels.owner
+          value: platform
+      - contains:
+          path: data
+          content:
+            config-app1: ""
+              requests:
+                - domain: "thebeat.co"
+                  queryType: "NS"

@@ -1,0 +1,256 @@
+suite: test deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should pass
+    set:
+      global.labels.owner: platform
+      command:
+        cmd: ['"./migrate_and_run.sh"']
+        extraArgs:
+          - '"HOSTNAME"'
+          - '"KUBERNETES_PORT"'
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isAPIVersion:
+          of: apps/v1
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: metadata.name
+          pattern: -beat-base$
+      - equal:
+          path: metadata.labels.owner
+          value: platform
+      - equal:
+          path: spec.template.metadata.annotations.prometheus\.io/scrape
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.private.k8s.management.thebeat.co/beat/exampleapp:v1.0.0
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 80
+            name: http-80
+            protocol: TCP
+      - isNull:
+          path: spec.template.spec.containers[0].env
+      - isNull:
+          path: spec.template.spec.containers[0].volumeMounts
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            httpGet:
+              path: /
+              port: http
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            httpGet:
+              path: /
+              port: http
+      - isEmpty:
+          path: spec.template.spec.containers[0].startupProbe
+      - isEmpty:
+          path: spec.template.spec.containers[0].resources
+      - isEmpty:
+          path: spec.template.spec.volumes
+      - isNull:
+          path: spec.template.nodeSelector
+      - isNull:
+          path: spec.template.affinity
+      - isNull:
+          path: spec.template.tolerations
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["./migrate_and_run.sh"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["HOSTNAME","KUBERNETES_PORT"]
+      - equal:
+          path: spec.template.metadata.labels.es_index
+          value: exampleowner
+
+  - it: should have env var
+    set:
+      global.labels.owner: platform
+      env.ENV: VAR
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].env
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENV
+            value: VAR
+  - it: should have tracing env var
+    set:
+      tracing.enabled: true
+      global.labels.owner: platform
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].env
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PATRON_JAEGER_AGENT_HOST
+            value: "$(NODE_IP)"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+  - it: should have secret
+    set:
+      global.labels.owner: platform
+      secrets.enabled: true
+      secrets.items.key-test: value-test
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /mnt/beat/secrets/
+            name: secrets
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secrets
+            secret:
+              items:
+                - key: key-test
+                  path: key-test
+              secretName: release-name-beat-base
+
+  - it: should have declared multiple ports
+    set:
+      global.labels.owner: platform
+      service:
+        ports:
+          - port: 80
+          - port: 8081
+          - port: 8082
+            name: custom-port-name
+          - port: 8083
+            protocol: GRPC
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-80
+            containerPort: 80
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-8081
+            containerPort: 8081
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: custom-port-name
+            containerPort: 8082
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: grpc-8083
+            containerPort: 8083
+            protocol: TCP
+
+  - it: should change the elasticsearch index name if esIndexName is set
+    set:
+      global.labels.owner: platform-services
+      esIndexName: my-custom-index-name
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.es_index
+          value: my-custom-index-name
+
+  - it: should have correct annotation if iamRole is set
+    set:
+      global.labels.owner: platform-services
+      iamRole.enabled: true
+      iamRole.name: role-test-name
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.iam\.amazonaws\.com/role
+          value: role-test-name
+
+  - it: should make the port name a string if not defined
+    set:
+      global.labels.owner: platform-services
+      service:
+        ports:
+          - port: 80
+          - port: 81
+            name: custom-port-name-81
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-80
+            containerPort: 80
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: custom-port-name-81
+            containerPort: 81
+            protocol: TCP
+
+  - it: should have a ServiceAccount attached
+    set:
+      global.labels.owner: platform
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.serviceAccountName
+          pattern: -beat-base$
+
+  - it: should have startupProbe if defined
+    set:
+      global.labels.owner: platform
+      startupProbe:
+        httpGet:
+          path: /test-probe
+          port: test-port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe
+          value:
+            httpGet:
+              path: /test-probe
+              port: test-port
+
+  - it: should have configMap
+    set:
+      global.labels.owner: platform
+      configMaps:
+        enabled: "true"
+        cms:
+          - name: config-app1
+            mountPath: /etc/myapp
+            fileName: config.yaml
+            data: |
+              requests:
+                - domain: "thebeat.co"
+                  queryType: "NS"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config-app1
+            configMap:
+              name: config-app1
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-app1
+            mountPath: /etc/myapp/config.yaml
+            subPath: config.yaml
+            readOnly: true
