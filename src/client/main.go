@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	url = "http://gfechio-onboarding-team2.private.k8s.stress.thebeat.co"
+	url = os.Getenv("CONNECT_URL")
 )
 
 var logger = logrus.New()
