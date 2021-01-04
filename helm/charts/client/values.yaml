@@ -1,0 +1,225 @@
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+
+  # Resource Labels. The below labels will be applied to all the resources of the helm release.
+  labels:
+    # (Optional) The component within the architecture such as "API" or "database".
+    component: ""
+    # (Optional) The name of a higher-level application this one is part of such as "payment gateway"
+    partOf: ""
+    # Used to identify who is responsible for the resource.
+    # Valid options: payments, ride, growth, pricing, fraud, platform, platform-services
+    owner: "platform"
+
+metadata:
+  namespace: gfechio
+
+replicaCount: 1
+
+image:
+  registry: registry.private.k8s.management.thebeat.co/beat/
+  name: gfechio-client
+  tag: TOB-2552
+  pullPolicy: Always
+
+
+
+# esIndexName is used to create an index in elasticsearch to aggregate your logs.
+# If omitted, it will fall back to the <stack>-cluster-<date> index.
+esIndexName: "gfechio-client"
+
+# changeCause is useful for checking the rollout history of the deployment, stateful set, or daemonset.
+# The changeCause value should be unique for every release, and ideally, inject it in the Helm release during the deployment process.
+# For example, in Jenkins, --set changeCause=Jenkins=\"${RUN_DISPLAY_URL} Commiter=${commiter}\". The latter will produce something like this:
+#
+# $ kubectl rollout history deployment carrot-api
+# 1 Jenkins=http://jenkins.management.thebeat.co:8080/job/carrot-k8s/job/v1.0.10/1/display/redirect Commiter=Maria Katsamperi
+changeCause: "gfechio-client"
+
+# if you want to overwrite default container command and arguments you can by specifying the first as list item
+# and as many arguments as you need as separate list of arguments.
+# If you need the command to be quoted you need to triple quote it in order for HELM YAML
+# parser to keep the quotes like so: command: ['''./migrate_and_run.sh'''] or quote the double quotes to keep
+# just the doubles like the example:
+# command:
+#   cmd: ['"./migrate_and_run.sh"']
+#   extraArgs:
+#     - '"argument1"'
+#     - '"argument2"'
+command:
+  cmd: []
+  extraArgs: []
+
+service:
+  # service.type -- This is the Type of Service [ clusterIP / NodePort / LoadBalancer ]
+  # #default -- "clusterIP"
+  type: ClusterIP
+  # service.ports[] -- Map of exposed Pod Ports
+  ports:
+      # service.ports[].port -- This is the Pod exposed Port Number
+      # @default -- "80"
+    - port: 5000
+      # service.ports[].targetPort -- This is the target Port on Container(s)
+      # @default -- service.ports[].port
+      targetPort: ""
+      # service.ports[].protocol -- This is the Port Protocol [ HTTP / TCP / GRPC ]
+      # @default -- "HTTP"
+      protocol: "HTTP"
+      # service.ports[].name -- This is the Name of exposed Pod Port
+      # @default -- <.protocol>-<.port> convention -- Please do not change unless you understand possible affections on Ingress/Svc conventions
+      name: ""
+
+env: {}
+  # ENV_VAR1: envVar2
+  # ENV_VAR2: envVar2
+
+ingresses:
+  api:
+    enabled: true
+    # type can be either public, private, or dashboard
+    type: private
+    annotations: {}
+      # kubernetes.io/tls-acme: "true"
+    path: /
+    host: exampleapp
+    clusterSuffix: private.k8s.stress.thebeat.co
+  dashboard:
+    enabled: false
+    # type can be either public, private, or dashboard
+    type: dashboard
+    annotations: {}
+      # kubernetes.io/tls-acme: "true"
+    path: /
+    host: exampleapp
+    clusterSuffix: dashboard.stress.thebeat.co
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 200m
+  #  memory: 256Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+monitoring:
+  enabled: true
+  path: /metrics
+  port: 8081
+
+tracing:
+  enabled: false
+  env:
+    PATRON_JAEGER_SAMPLER_TYPE: probabilistic
+    PATRON_JAEGER_SAMPLER_PARAM: 0
+    PATRON_JAEGER_AGENT_HOST: $(NODE_IP)
+    PATRON_JAEGER_AGENT_PORT: 6831
+
+autoscaling:
+  enabled: true
+  minReplicas: "2"
+  maxReplicas: "10"
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 80
+
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: "1"
+  maxUnavailable: "50%"
+
+## Enable 'secrets' and add key/value pairs of Items or Files
+##
+## - All secrets that will created at kubernetes, will inherit as names their key name
+## - All secrets will be mounted at Container at 'mountPath' with their respective names
+##
+## - Item Example: 'password=1234' will be transformed as kubernetes secret with name 'password'
+##            and will be mounted as file at Container at '/mnt/beat/secrets/password'
+##            and will contain value '1234'
+##
+## - File Example: 'certificate=/tmp/cert.pem' will be transformed as kubernetes secret with name 'certificate'
+##            and will be mounted as file at Container at '/mnt/beat/secrets/certificate'
+##            and will contain value '----BEGIN RSA ... END RSA----'
+##
+## - Values Example:
+## secrets:
+##   enabled: true
+##   mountPath: /mnt/beat/secrets/
+##   items:
+##     key-test: value-test
+##     key-token: value-token
+##   files:
+##     certificate: /path/to/certificate.crt (make sure you have add and cleanup files in correspoding Jenkins workspace)
+##     private-key: /path/to/key.crt (make sure you have add and cleanup files in correspoding Jenkins workspace)
+##
+secrets:
+  enabled: false
+  mountPath: /mnt/beat/secrets/
+  items: {}
+  files: {}
+
+## Enable 'configmaps' and add key/value pairs of Items or Files
+##
+## - All configmaps that will created at kubernetes, will inherit as names their key name
+## - All configmaps will be mounted at Container at 'mountPath' with their respective names
+##
+## - Values Example:
+## configmaps:
+##   enabled: true
+##   cms:
+##     - name: config-app1
+##       mountPath: /etc/myapp
+##       fileName: config.yaml
+##       data: |
+##         requests:
+##           - domain: "thebeat.co"
+##             queryType: "NS"
+##     - name: config-app2
+##       mountPath: /etc/myapp
+##       fileName: config.yaml
+##       data: |
+##         requests:
+##           - domain: "thebeat.co"
+##             queryType: "NS"
+##
+##
+configMaps:
+  enabled: false
+  cms: {}
+
+nodeSelector: {}
+# enable the following if your app is stateless and comment out the above line
+# nodeSelector:
+  # is.spot.instance: "true"
+
+tolerations: []
+# enable the following if your app is stateless and comment out the above line
+# tolerations:
+#   - key: "instancetype"
+#     operator: "Equal"
+#     value: "spot"
+#     effect: "NoSchedule"
+
+affinity: {}
+
+# allow deployment to have additional annotations
+podAnnotations: {}
+
+iamRole:
+  enabled: false
+  name: "role-name"
+
+mop:
+  enabled: false
+  annotation: "master-of-puppets.alpha.kubernetes.io/enabled"
