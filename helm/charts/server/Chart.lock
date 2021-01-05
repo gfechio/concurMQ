@@ -2,5 +2,8 @@ dependencies:
 - name: beat-base
   repository: https://chartmuseum.private.k8s.management.thebeat.co
   version: 0.15.2
-digest: sha256:305d0b4f00878ac516a3062bb63a77fd6b9f0f867b64ddc7c40630417039fae2
-generated: "2021-01-04T10:11:17.651219811+01:00"
+- name: beat-istio
+  repository: https://chartmuseum.private.k8s.management.thebeat.co
+  version: 0.2.3
+digest: sha256:fa7114841c45ce13fc7ac509a7bc1863a41f08ab13f55e05e3f463309c37a266
+generated: "2021-01-05T15:03:42.983301159+01:00"

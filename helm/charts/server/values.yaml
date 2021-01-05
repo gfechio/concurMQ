@@ -5,6 +5,8 @@ global:
     component: ""
     partOf: ""
     owner: "platform"
+  service:
+    port: 8080
 app:
   replicaCount: 1
   image:
@@ -90,4 +92,22 @@ app:
   mop:
     enabled: false
     annotation: "master-of-puppets.alpha.kubernetes.io/enabled"
-  
+istio:
+  publicExposed: enable
+  istioGateway: "ingressgateway"
+  auth:
+    enabled: true
+    allowNamespace:
+    - dmv
+    - rest
+    forwardOriginalJWT: false
+    identityProvider: https://dex.k8s.stress.thebeat.co
+    protectedHosts:
+    - gfechio-server
+    policy:
+    - group: [Devops]
+      methods: ["*"]
+      paths: [/*]
+    - group: [Backend]
+      methods: ["*"]
+      paths: [/*]
