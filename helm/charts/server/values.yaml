@@ -48,8 +48,8 @@ app:
       PATRON_JAEGER_AGENT_HOST: $(NODE_IP)
       PATRON_JAEGER_AGENT_PORT: 6831
   blackboxProbe:
-    enabled: true
-    path: /health
+    enabled: false
+    path: /healthz
     for: 5m
     severity: warning
   livenessProbe:
@@ -103,7 +103,7 @@ istio:
     forwardOriginalJWT: false
     identityProvider: https://dex.k8s.stress.thebeat.co
     protectedHosts:
-    - gfechio-server
+    - gfechio-server.gfechio.svc
     policy:
     - group: [Devops]
       methods: ["*"]
