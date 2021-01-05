@@ -9,9 +9,6 @@ import (
 	rus_syslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
-const (
-	url = os.Getenv("CONNECT_URL")
-)
 
 var logger = logrus.New()
 
@@ -37,6 +34,8 @@ func main() {
 	logger.Info("Before anything.")
 	client := &http.Client{}
 
+	url := os.Getenv("CONNECT_URL")
+	logger.Info("Using Env Var : ",url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		logger.Error("Could not set HTTP request")
