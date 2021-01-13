@@ -86,6 +86,7 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	broker()
 	router := mux.NewRouter()
 	// Just for testing (and as an example to start from).
 	router.HandleFunc("/healthz", healthz).Methods("GET")
@@ -94,5 +95,5 @@ func main() {
 
 	// Web server, this exits only upon errors.
 	logger.Fatal(http.ListenAndServe(":5000", router))
-
+	
 }
