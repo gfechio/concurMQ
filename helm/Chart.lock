@@ -6,4 +6,4 @@ dependencies:
   repository: https://chartmuseum.private.k8s.management.thebeat.co
   version: 0.2.3
 digest: sha256:fa7114841c45ce13fc7ac509a7bc1863a41f08ab13f55e05e3f463309c37a266
-generated: "2021-01-05T15:03:42.983301159+01:00"
+generated: "2021-01-13T16:46:23.527541699+01:00"
