@@ -6,7 +6,7 @@ FROM go as run
 WORKDIR /src
 COPY . .
 ENV KUBESTACK_ENV=development
-ENTRYPOINT [ "go", "run", "main.go" ]
+ENTRYPOINT [ "go", "run", "." ]
 
 # Test the code
 # This is not used by CI
@@ -24,9 +24,9 @@ RUN go get github.com/ahmetb/govvv
 WORKDIR /src
 COPY . .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-RUN go build -a -o /bin/gfechio-server main.go
+RUN go build -a -o /bin/concurmq .
 
 # Production image
 FROM gcr.io/distroless/base as release
-COPY --from=build /bin/gfechio-server /
-ENTRYPOINT ["/concur"]
+COPY --from=build /bin/concurmq /
+ENTRYPOINT ["/concurmq"]
