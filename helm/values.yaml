@@ -1,6 +1,6 @@
 global:
-  nameOverride: "gfechio"
-  fullnameOverride: "gfechio-server"
+  nameOverride: "concurmq"
+  fullnameOverride: "concurmq-server"
   labels:
     component: ""
     partOf: ""
@@ -11,11 +11,11 @@ app:
   replicaCount: 1
   image:
     registry: registry.private.k8s.management.thebeat.co/beat/
-    name: gfechio-server
+    name: concurmq-server
     tag: TOB-2552
     pullPolicy: Always
-  esIndexName: "gfechio-owner"
-  changeCause: "gfechio-cause"
+  esIndexName: "concurmq-owner"
+  changeCause: "concurmq-cause"
   command:
     cmd: []
     extraArgs: []
@@ -26,6 +26,10 @@ app:
         targetPort: 5000
         protocol: ""
         name: "http"
+      - port: 1883
+        targetPort: 1883
+        protocol: ""
+        name: "mqtt"
   env: {}
   ingresses:
     api:
@@ -33,7 +37,7 @@ app:
       type: private
       annotations: {}
       path: /
-      host: gfechio
+      host: concurmq
       clusterSuffix: private.k8s.stress.thebeat.co
   resources: {}
   monitoring:
@@ -103,7 +107,7 @@ istio:
     forwardOriginalJWT: false
     identityProvider: https://dex.k8s.stress.thebeat.co
     protectedHosts:
-    - gfechio-server.gfechio.svc
+    - concurmq-server.concurmq.svc
     policy:
     - group: [Devops]
       methods: ["*"]
