@@ -29,4 +29,4 @@ RUN go build -a -o /bin/gfechio-server main.go
 # Production image
 FROM gcr.io/distroless/base as release
 COPY --from=build /bin/gfechio-server /
-ENTRYPOINT ["/gfechio-server"]
+ENTRYPOINT ["/concur"]
