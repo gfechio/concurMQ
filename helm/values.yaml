@@ -11,8 +11,8 @@ app:
   replicaCount: 1
   image:
     registry: registry.private.k8s.management.thebeat.co/beat/
-    name: concurmq-server
-    tag: TOB-2552
+    name: concurmq
+    tag: latest
     pullPolicy: Always
   esIndexName: "concurmq-owner"
   changeCause: "concurmq-cause"
