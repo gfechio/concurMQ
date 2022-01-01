@@ -10,7 +10,7 @@ global:
 app:
   replicaCount: 1
   image:
-    registry: registry.private.k8s.management.thebeat.co/beat/
+    registry: gfechio/concurmq
     name: concurmq
     tag: latest
     pullPolicy: Always
@@ -38,7 +38,7 @@ app:
       annotations: {}
       path: /
       host: concurmq
-      clusterSuffix: private.k8s.stress.thebeat.co
+      clusterSuffix: example.co
   resources: {}
   monitoring:
     enabled: false
@@ -46,11 +46,6 @@ app:
     port: 8081
   tracing:
     enabled: false
-    env:
-      P8ATRON_JAEGER_SAMPLER_TYPE: probabilistic
-      PATRON_JAEGER_SAMPLER_PARAM: 0
-      PATRON_JAEGER_AGENT_HOST: $(NODE_IP)
-      PATRON_JAEGER_AGENT_PORT: 6831
   blackboxProbe:
     enabled: false
     path: /healthz
@@ -83,7 +78,7 @@ app:
     maxUnavailable: ""
   secrets:
     enabled: false
-    mountPath: /mnt/beat/secrets/
+    mountPath: /mnt/secrets/
     items: {}
     files: {}
   nodeSelector: {}
@@ -93,25 +88,3 @@ app:
   iamRole:
     enabled: false
     name: "role-name"
-  mop:
-    enabled: false
-    annotation: "master-of-puppets.alpha.kubernetes.io/enabled"
-istio:
-  publicExposed: enable
-  istioGateway: "ingressgateway"
-  auth:
-    enabled: true
-    allowNamespace:
-    - dmv
-    - rest
-    forwardOriginalJWT: false
-    identityProvider: https://dex.k8s.stress.thebeat.co
-    protectedHosts:
-    - concurmq-server.concurmq.svc
-    policy:
-    - group: [Devops]
-      methods: ["*"]
-      paths: [/*]
-    - group: [Backend]
-      methods: ["*"]
-      paths: [/*]

@@ -1,2 +1,2 @@
 # concurMQ
-Small Go application to test Actor Model
+Small Go application to test MQTT.
